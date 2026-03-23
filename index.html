@@ -4,7 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>我的导航 - 上网从这里开始</title>
-  
+  <!-- 登录状态显示 + 按钮 -->
+<div style="text-align: right; margin: 10px 0;">
+  <span id="user-status">未登录</span>
+  <button id="github-login-btn" style="margin-left: 10px; padding: 8px 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer;">用 GitHub 登录</button>
+  <button id="logout-btn" style="margin-left: 10px; padding: 8px 16px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; display: none;">退出登录</button>
+</div>
   <!-- sbClient CDN -->
 
   <style>
@@ -158,6 +163,71 @@
   console.log('脚本启动');
   loadLinks();
 </script>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
+  const supabaseUrl = 'https://你的项目-ref.supabase.co';          // ← 替换你的 Supabase URL
+  const supabaseAnonKey = 'eyJ...你的anon key整串';                // ← 替换你的 anon key
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // 登录函数
+  async function signInWithGitHub() {
+    const statusEl = document.getElementById('user-status');
+    statusEl.textContent = '登录中...';
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: window.location.href  // 登录成功后回当前主页
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error('登录错误:', err);
+      statusEl.textContent = '登录失败: ' + (err.message || '未知');
+    }
+  }
+
+  // 退出登录
+  async function signOut() {
+    await supabase.auth.signOut();
+    location.reload();  // 刷新页面更新状态
+  }
+
+  // 绑定按钮事件
+  document.getElementById('github-login-btn').addEventListener('click', signInWithGitHub);
+  document.getElementById('logout-btn').addEventListener('click', signOut);
+
+  // 监听登录状态变化（实时更新页面）
+  supabase.auth.onAuthStateChange((event, session) => {
+    const statusEl = document.getElementById('user-status');
+    const loginBtn = document.getElementById('github-login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    if (session && session.user) {
+      statusEl.textContent = `欢迎，${session.user.user_metadata.full_name || session.user.email || '用户'}`;
+      loginBtn.style.display = 'none';
+      logoutBtn.style.display = 'inline-block';
+      // 这里以后可以显示“我的收藏夹”按钮
+    } else {
+      statusEl.textContent = '未登录';
+      loginBtn.style.display = 'inline-block';
+      logoutBtn.style.display = 'none';
+    }
+  });
+
+  // 页面加载时立即检查当前登录状态
+  (async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const statusEl = document.getElementById('user-status');
+      statusEl.textContent = `欢迎，${session.user.user_metadata.full_name || session.user.email || '用户'}`;
+      document.getElementById('github-login-btn').style.display = 'none';
+      document.getElementById('logout-btn').style.display = 'inline-block';
+    }
+  })();
+</script>
 </body>
 </html>
