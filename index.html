@@ -85,32 +85,34 @@
     <footer>我的导航页 · 2026</footer>
   </div>
 
-  <script>
-  // === 替换成你的真实信息 ===
+<script>
+  // === 你的真实信息 ===
   const supabaseUrl = 'https://fsymoetkfyqgskfdrwud.supabase.co';
   const supabaseKey = 'sb_publishable_xJSoDjrd7NOZ7qi9f0f-Ew_tQaMTA3Q';
 
-  // 这里用全局的 supabase（库注入的）来创建客户端，避免名字冲突
   const sbClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // 加载数据库链接
   async function loadLinks() {
+    console.log('开始加载链接...');  // 调试1：看是否执行到这里
+
     const list = document.getElementById('links-list');
-    const errorEl = document.getElementById('error-msg');
+    const errorEl = document.getElementById('error-msg') || document.createElement('p'); // 防空
     list.innerHTML = '<li>加载中...</li>';
-    errorEl.innerHTML = '';
 
     try {
+      console.log('发起 Supabase 查询...');
       const { data, error } = await sbClient
         .from('links')
         .select('*')
         .order('created_at', { ascending: false });
 
+      console.log('查询结果：', data, error);  // 调试2：看返回什么
+
       if (error) throw error;
 
       list.innerHTML = '';
-      if (data.length === 0) {
-        list.innerHTML = '<li>还没有用户分享链接，快来提交一个吧！</li>';
+      if (!data || data.length === 0) {
+        list.innerHTML = '<li>数据库为空，快提交第一个链接吧！</li>';
       } else {
         data.forEach(link => {
           const li = document.createElement('li');
@@ -119,13 +121,15 @@
         });
       }
     } catch (err) {
-      console.error('Supabase 错误:', err);
-      list.innerHTML = '<li style="color:red;">加载失败</li>';
-      errorEl.innerHTML = '错误：' + (err.message || '未知问题，请检查控制台或 Supabase 设置');
+      console.error('Supabase 加载错误：', err);
+      list.innerHTML = '<li style="color:red;">加载失败，请检查控制台</li>';
+      errorEl.innerHTML = '错误：' + (err.message || '未知');
+      errorEl.style.color = 'red';
+      errorEl.style.textAlign = 'center';
     }
   }
 
-  // 提交新链接（同样改成 sbClient）
+  // 提交部分（不变，但加日志）
   document.getElementById('submit-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -135,18 +139,21 @@
 
     if (!title || !url) return alert('标题和 URL 必填！');
 
+    console.log('提交数据：', { title, url, category });
+
     const { error } = await sbClient.from('links').insert([{ title, url, category }]);
     
     if (error) {
+      console.error('提交失败：', error);
       alert('提交失败：' + error.message);
     } else {
       alert('提交成功！');
       document.getElementById('submit-form').reset();
-      loadLinks();  // 刷新列表
+      loadLinks();
     }
   });
 
-  // 页面加载时自动读取
+  console.log('脚本启动，准备加载链接');
   loadLinks();
 </script>
 
