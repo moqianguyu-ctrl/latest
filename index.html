@@ -6,7 +6,6 @@
   <title>我的导航 - 上网从这里开始</title>
   
   <!-- sbClient CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@sbClient/sbClient-js@2"></script>
 
   <style>
     body { 
@@ -85,34 +84,37 @@
     <footer>我的导航页 · 2026</footer>
   </div>
 
-<script>
-  // === 你的真实信息 ===
+<script type="module">
+  // 导入 Supabase（用 ESM 方式，避免全局冲突）
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+  // === 你的真实信息（替换这里） ===
   const supabaseUrl = 'https://fsymoetkfyqgskfdrwud.supabase.co';
   const supabaseKey = 'sb_publishable_xJSoDjrd7NOZ7qi9f0f-Ew_tQaMTA3Q';
 
-  const sbClient = supabase.createClient(supabaseUrl, supabaseKey);
+  const sbClient = createClient(supabaseUrl, supabaseKey);
 
   async function loadLinks() {
-    console.log('开始加载链接...');  // 调试1：看是否执行到这里
+    console.log('开始加载链接...');
 
     const list = document.getElementById('links-list');
-    const errorEl = document.getElementById('error-msg') || document.createElement('p'); // 防空
+    const errorEl = document.getElementById('error-msg') || document.createElement('p');
     list.innerHTML = '<li>加载中...</li>';
 
     try {
-      console.log('发起 Supabase 查询...');
+      console.log('发起查询...');
       const { data, error } = await sbClient
         .from('links')
         .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('查询结果：', data, error);  // 调试2：看返回什么
+      console.log('查询结果：', data, error);
 
       if (error) throw error;
 
       list.innerHTML = '';
       if (!data || data.length === 0) {
-        list.innerHTML = '<li>数据库为空，快提交第一个链接吧！</li>';
+        list.innerHTML = '<li>数据库为空，快提交第一个链接！</li>';
       } else {
         data.forEach(link => {
           const li = document.createElement('li');
@@ -121,15 +123,15 @@
         });
       }
     } catch (err) {
-      console.error('Supabase 加载错误：', err);
-      list.innerHTML = '<li style="color:red;">加载失败，请检查控制台</li>';
-      errorEl.innerHTML = '错误：' + (err.message || '未知');
+      console.error('Supabase 错误：', err);
+      list.innerHTML = '<li style="color:red;">加载失败</li>';
+      errorEl.innerHTML = '错误：' + (err.message || '未知，请检查控制台');
       errorEl.style.color = 'red';
       errorEl.style.textAlign = 'center';
     }
   }
 
-  // 提交部分（不变，但加日志）
+  // 提交表单（同样用 sbClient）
   document.getElementById('submit-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -139,7 +141,7 @@
 
     if (!title || !url) return alert('标题和 URL 必填！');
 
-    console.log('提交数据：', { title, url, category });
+    console.log('提交中：', { title, url, category });
 
     const { error } = await sbClient.from('links').insert([{ title, url, category }]);
     
@@ -153,7 +155,7 @@
     }
   });
 
-  console.log('脚本启动，准备加载链接');
+  console.log('脚本启动');
   loadLinks();
 </script>
 
