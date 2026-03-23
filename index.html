@@ -5,92 +5,147 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>我的导航 - 上网从这里开始</title>
   
-  <!-- Supabase CDN（关键！不用安装任何东西） -->
+  <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    body { font-family: "Microsoft YaHei", Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; color: #333; }
-    h1 { text-align: center; color: #4a90e2; }
-    .search { max-width: 600px; margin: 30px auto; text-align: center; }
+    body { 
+      font-family: "Microsoft YaHei", Arial, sans-serif; 
+      background: #f8f9fa; 
+      margin: 0; 
+      padding: 20px; 
+      color: #333; 
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    h1 { text-align: center; color: #4a90e2; margin: 30px 0; }
+    .search { max-width: 600px; margin: 30px auto; }
     .search form { display: flex; background: white; border-radius: 30px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .search input { flex: 1; border: none; padding: 14px 20px; font-size: 1.1em; outline: none; }
     .search button { background: #4a90e2; color: white; border: none; padding: 0 30px; cursor: pointer; }
-    ul { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-    li a { display: block; padding: 12px; background: white; border-radius: 8px; text-align: center; text-decoration: none; color: #333; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .search button:hover { background: #357abd; }
+    .section { margin: 40px 0; }
+    .section h2 { color: #4a90e2; border-bottom: 2px solid #4a90e2; padding-bottom: 8px; }
+    ul { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+    li a { display: block; padding: 12px; background: white; border-radius: 8px; text-align: center; text-decoration: none; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s; }
     li a:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); color: #4a90e2; }
-    form { max-width: 400px; margin: 40px auto; background: white; padding: 20px; border-radius: 8px; }
-    input, button { width: 100%; padding: 10px; margin: 8px 0; }
+    form { max-width: 500px; margin: 40px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    input, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; font-size: 1em; }
+    button { background: #4a90e2; color: white; border: none; cursor: pointer; }
+    button:hover { background: #357abd; }
+    #error-msg { color: red; text-align: center; margin: 20px; }
+    footer { text-align: center; color: #777; margin-top: 60px; }
   </style>
 </head>
 <body>
 
-  <h1>我的导航</h1>
+  <div class="container">
+    <h1>我的导航</h1>
 
-  <!-- 搜索框 -->
-  <div class="search">
-    <form action="https://www.baidu.com/s" method="get" target="_blank">
-      <input type="text" name="wd" placeholder="输入关键词搜索...">
-      <button type="submit">搜</button>
-    </form>
+    <!-- 搜索框 -->
+    <div class="search">
+      <form action="https://www.baidu.com/s" method="get" target="_blank">
+        <input type="text" name="wd" placeholder="输入关键词搜索..." autocomplete="off">
+        <button type="submit">搜</button>
+      </form>
+    </div>
+
+    <!-- 静态热门链接（fallback） -->
+    <div class="section">
+      <h2>热门网站（固定）</h2>
+      <ul>
+        <li><a href="https://www.baidu.com" target="_blank">百度</a></li>
+        <li><a href="https://www.google.com" target="_blank">Google</a></li>
+        <li><a href="https://www.taobao.com" target="_blank">淘宝</a></li>
+        <li><a href="https://www.jd.com" target="_blank">京东</a></li>
+        <li><a href="https://www.bilibili.com" target="_blank">B站</a></li>
+        <li><a href="https://v.qq.com" target="_blank">腾讯视频</a></li>
+      </ul>
+    </div>
+
+    <!-- 从 Supabase 数据库加载的链接 -->
+    <div class="section">
+      <h2>用户分享的链接（从数据库）</h2>
+      <ul id="links-list">
+        <li>加载中...</li>
+      </ul>
+      <p id="error-msg"></p>
+    </div>
+
+    <!-- 提交表单 -->
+    <div class="section">
+      <h2>提交新链接给大家用</h2>
+      <form id="submit-form">
+        <input type="text" id="title" placeholder="标题（如：B站）" required>
+        <input type="url" id="url" placeholder="https://www.bilibili.com" required>
+        <input type="text" id="category" placeholder="分类（如：视频）">
+        <button type="submit">提交到数据库</button>
+      </form>
+    </div>
+
+    <footer>我的导航页 · 2026</footer>
   </div>
 
-  <h2>从数据库读取的热门链接</h2>
-  <ul id="links-list"></ul>
-
-  <!-- 提交新链接的表单 -->
-  <h2>提交新链接给大家用</h2>
-  <form id="submit-form">
-    <input type="text" id="title" placeholder="标题（如：B站）" required>
-    <input type="url" id="url" placeholder="https://www.bilibili.com" required>
-    <input type="text" id="category" placeholder="分类（如：视频）">
-    <button type="submit">提交到数据库</button>
-  </form>
-
   <script>
-    // === 这里填你的 Supabase 信息 ===
-    const supabaseUrl = 'https://fsymoetkfyqgskfdrwud.supabase.co';   // ← 把刚才复制的 URL 粘贴在这里
-    const supabaseKey = 'sb_publishable_xJSoDjrd7NOZ7qi9f0f-Ew_tQaMTA3Q';               // ← 把刚才复制的 key 粘贴在这里
+    // === 替换成你的真实信息 ===
+    const supabaseUrl = 'https://fsymoetkfyqgskfdrwud.supabase.co';  // ← 这里改
+    const supabaseKey = 'sb_publishable_xJSoDjrd7NOZ7qi9f0f-Ew_tQaMTA3Q';               // ← 这里改
 
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 读取并显示链接
+    // 加载数据库链接
     async function loadLinks() {
-      const { data, error } = await supabase.from('links').select('*');
       const list = document.getElementById('links-list');
-      list.innerHTML = '';
-      
-      if (error) {
-        list.innerHTML = '<li style="color:red;">加载失败，请检查 Supabase 设置</li>';
-        return;
+      const errorEl = document.getElementById('error-msg');
+      list.innerHTML = '<li>加载中...</li>';
+      errorEl.innerHTML = '';
+
+      try {
+        const { data, error } = await supabase
+          .from('links')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        list.innerHTML = '';
+        if (data.length === 0) {
+          list.innerHTML = '<li>还没有用户分享链接，快来提交一个吧！</li>';
+        } else {
+          data.forEach(link => {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="${link.url}" target="_blank">${link.title} (${link.category || '未分类'})</a>`;
+            list.appendChild(li);
+          });
+        }
+      } catch (err) {
+        console.error('Supabase 错误:', err);
+        list.innerHTML = '<li style="color:red;">加载失败</li>';
+        errorEl.innerHTML = '错误：' + (err.message || '未知问题，请检查控制台或 Supabase 设置');
       }
-      
-      data.forEach(link => {
-        const li = document.createElement('li');
-        li.innerHTML = `<a href="${link.url}" target="_blank">${link.title} (${link.category || '未分类'})</a>`;
-        list.appendChild(li);
-      });
     }
 
     // 提交新链接
     document.getElementById('submit-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const title = document.getElementById('title').value;
-      const url = document.getElementById('url').value;
-      const category = document.getElementById('category').value;
+      const title = document.getElementById('title').value.trim();
+      const url = document.getElementById('url').value.trim();
+      const category = document.getElementById('category').value.trim();
+
+      if (!title || !url) return alert('标题和 URL 必填！');
 
       const { error } = await supabase.from('links').insert([{ title, url, category }]);
       
       if (error) {
         alert('提交失败：' + error.message);
       } else {
-        alert('提交成功！刷新页面就能看到');
+        alert('提交成功！');
         document.getElementById('submit-form').reset();
-        loadLinks();  // 立即刷新列表
+        loadLinks();  // 刷新列表
       }
     });
 
-    // 页面加载完就读取数据
+    // 页面加载时自动读取
     loadLinks();
   </script>
 
