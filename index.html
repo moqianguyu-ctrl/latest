@@ -180,7 +180,7 @@
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: window.location.href  // 登录成功后回当前主页
+          redirectTo: 'https://kk.lovehuang.cn'  // 登录成功后回当前主页
         }
       });
       if (error) throw error;
