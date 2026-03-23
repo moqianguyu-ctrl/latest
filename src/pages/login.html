@@ -1,0 +1,14 @@
+<button onclick="signInWithGitHub()">用 GitHub 登录</button>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+  const sb = createClient('你的URL', '你的anon key');
+
+  async function signInWithGitHub() {
+    await sb.auth.signInWithOAuth({ provider: 'github' });
+  }
+
+  // 检查登录状态
+  const { data: { user } } = await sb.auth.getUser();
+  if (user) console.log('已登录', user.id);
+</script>
