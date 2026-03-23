@@ -2,7 +2,7 @@
 
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-  const sb = createClient('你的URL', '你的anon key');
+  const sb = createClient('https://fsymoetkfyqgskfdrwud.supabase.co', 'sb_publishable_xJSoDjrd7NOZ7qi9f0f-Ew_tQaMTA3Q');
 
   async function signInWithGitHub() {
     await sb.auth.signInWithOAuth({ provider: 'github' });
